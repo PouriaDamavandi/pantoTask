@@ -1,34 +1,39 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import { type SinglePoint } from "../types/globalTypes";
+import type { SinglePoint } from "../types/globalTypes";
 
 type SingleSeriesChartProps = {
   data: SinglePoint[];
 };
 
-export default function SingleSeriesChart({
-  data,
-}: Readonly<SingleSeriesChartProps>) {
+export default function SingleSeriesChart({ data }: Readonly<SingleSeriesChartProps>) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!ref.current) return;
+
+    // Clear previous render
+    const container = ref.current;
+    container.innerHTML = "";
+
+    // Filter out null values
     const cleanData = data.filter(([, v]) => v !== null) as [number, number][];
 
+    // Set up dimensions
     const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-    const outerWidth = 600;
-    const outerHeight = 300;
-    const width = outerWidth - margin.left - margin.right;
-    const height = outerHeight - margin.top - margin.bottom;
+    const width = 600 - margin.left - margin.right;
+    const height = 300 - margin.top - margin.bottom;
 
+    // Create SVG
     const svg = d3
-      .select(ref.current)
-      .html("")
+      .select(container)
       .append("svg")
-      .attr("width", outerWidth)
-      .attr("height", outerHeight)
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    // Create scales
     const x = d3
       .scaleLinear()
       .domain(d3.extent(cleanData, (d) => d[0]) as [number, number])
@@ -40,7 +45,8 @@ export default function SingleSeriesChart({
       .nice()
       .range([height, 0]);
 
-    const lineGen = d3
+    // Draw line
+    const line = d3
       .line<[number, number]>()
       .x((d) => x(d[0]))
       .y((d) => y(d[1]));
@@ -49,16 +55,23 @@ export default function SingleSeriesChart({
       .append("path")
       .datum(cleanData)
       .attr("fill", "none")
-      .attr("stroke", "black")
+      .attr("stroke", "#1f77b4")
       .attr("stroke-width", 1.5)
-      .attr("d", lineGen);
+      .attr("d", line);
 
+    // Add axes
     svg
       .append("g")
       .attr("transform", `translate(0,${height})`)
       .call(d3.axisBottom(x));
+
     svg.append("g").call(d3.axisLeft(y));
+
+    // Cleanup function
+    return () => {
+      container.innerHTML = "";
+    };
   }, [data]);
 
-  return <div ref={ref} />;
+  return <div ref={ref} className="single-series-chart" />;
 }

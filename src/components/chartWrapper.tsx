@@ -13,9 +13,10 @@ export default function ChartWrapper({
   data,
 }: Readonly<ChartWrapperProps>) {
   const multi = isMultiSeries(data);
+
   return (
-    <div style={{ margin: "2rem 0" }}>
-      <h2>{title}</h2>
+    <div className="chart-wrapper" style={{ margin: "2rem 0" }}>
+      <h2 className="chart-title">{title}</h2>
       {multi ? (
         <MultiSeriesChart data={data} />
       ) : (
